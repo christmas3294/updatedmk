@@ -32,6 +32,7 @@ public class BattleRoyaleCommand {
         }
         BattleRoyaleManager.start(server);
         context.getSource().sendSuccess(() -> Component.literal("Battle started."), true);
+
         return 1;
     }
 
@@ -48,10 +49,10 @@ public class BattleRoyaleCommand {
 
     private int join(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = context.getSource().getPlayer();
-        if (!BattleRoyaleManager.isActive()) {
-            context.getSource().sendFailure(Component.literal("No active battle."));
-            return 0;
-        }
+//        if (!BattleRoyaleManager.isActive()) {
+//            context.getSource().sendFailure(Component.literal("No active battle."));
+//            return 0;
+//        }
         BattleRoyaleManager.addPlayer(player);
         context.getSource().sendSuccess(() -> Component.literal("Joined battle."), false);
         return 1;

@@ -5,8 +5,11 @@ import net.kaupenjoe.mccourse.battleroyale.BattleRoyaleCommand;
 import net.kaupenjoe.mccourse.battleroyale.BattleRoyaleManager;
 import net.kaupenjoe.mccourse.command.RestoreMapCommand;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -26,8 +29,12 @@ public class BattleRoyaleEvents {
             return;
         }
         if (event.isWasDeath() && event.getEntity() instanceof ServerPlayer player) {
-            BattleRoyaleManager.removePlayer(player);
-            BattleRoyaleManager.teleportOut(player);
+            if (BattleRoyaleManager.finduuid(player.getUUID())) {
+                BattleRoyaleManager.handleDeath(player);
+                BattleRoyaleManager.removePlayer(player);
+                BattleRoyaleManager.teleportOut(player);
+            }
+
         }
     }
 
@@ -35,11 +42,14 @@ public class BattleRoyaleEvents {
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (BattleRoyaleManager.isActive() && event.getEntity() instanceof ServerPlayer player) {
             if (BattleRoyaleManager.getActivePlayers().contains(player.getUUID())) {
-                BattleRoyaleManager.addPlayer(player);
+
+//                    BattleRoyaleManager.addPlayer(player);
+
             } else {
-                BattleRoyaleManager.teleportOut(player);
-                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
-                        "Battle in progress - you are not participating."));
+//                BattleRoyaleManager.handleDeath(player);
+//                BattleRoyaleManager.teleportOut(player);
+//                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+//                        "Battle in progress - you are not participating."));
             }
         }
     }
@@ -48,10 +58,15 @@ public class BattleRoyaleEvents {
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             if (BattleRoyaleManager.isActive()) {
-                BattleRoyaleManager.removePlayer(player);
-                BattleRoyaleManager.teleportOut(player);
+                if (BattleRoyaleManager.finduuid(player.getUUID())) {
+                    BattleRoyaleManager.handleDeath(player);
+                    BattleRoyaleManager.removePlayer(player);
+                    BattleRoyaleManager.teleportOut(player);
+                }
             } else {
-                BattleRoyaleManager.removePlayer(player);
+
+                    BattleRoyaleManager.removePlayer(player);
+
             }
         }
     }
@@ -59,7 +74,26 @@ public class BattleRoyaleEvents {
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
-            BattleRoyaleManager.handleDeath(player);
+            if (BattleRoyaleManager.finduuid(player.getUUID())) {
+                BattleRoyaleManager.handleDeath(player);
+            }
+
+        }
+
+    }
+
+
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            BattleRoyaleManager.tick(event.getServer().overworld());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player) {
+            BattleRoyaleManager.enforceBounds(player);
         }
     }
 }

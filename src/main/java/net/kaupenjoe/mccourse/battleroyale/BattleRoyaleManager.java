@@ -6,8 +6,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
 import java.util.*;
@@ -21,7 +23,20 @@ public class BattleRoyaleManager {
     private static final Set<UUID> ACTIVE_PLAYERS = new HashSet<>();
     private static final Map<UUID, InventoryState> SAVED_INVENTORIES = new HashMap<>();
     private static boolean active = false;
+    private static long startTick = 0;
 
+    private static final int DAMAGE_GRACE_TICKS = 20 * 10; // 10 seconds
+    private static final int ARENA_TIME_TICKS = 20 * 60 * 10; // 10 minutes
+
+    private static final BlockPos START_POS = new BlockPos(88, 132, 328);
+    private static final BlockPos ARENA_POS = new BlockPos(147, 8, 287);
+    private static final BlockPos OUT_POS = new BlockPos(-237, 18, 334);
+
+    private static final BlockPos BOUNDS_MIN = new BlockPos(-29, 4, 412);
+    private static final BlockPos BOUNDS_MAX = new BlockPos(188, 97, 154);
+
+    private static MapBackup MAP_BACKUP;
+    private static boolean movedToArena = false;
     private BattleRoyaleManager() {}
 
     public static boolean isActive() {
@@ -32,12 +47,34 @@ public class BattleRoyaleManager {
      * Starts a match with all currently online players.
      */
     public static void start(MinecraftServer server) {
-        ACTIVE_PLAYERS.clear();
-        SAVED_INVENTORIES.clear();
+//        ACTIVE_PLAYERS.clear();
+//        SAVED_INVENTORIES.clear();
+        startTick = server.overworld().getGameTime();
+        movedToArena = false;
+
+        ServerLevel level = server.getLevel(Level.OVERWORLD);
+
+
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            ACTIVE_PLAYERS.add(player.getUUID());
-            SAVED_INVENTORIES.put(player.getUUID(), new InventoryState(player));
-            player.sendSystemMessage(Component.literal("Battle Royale started!"));
+            for (UUID activePlayer : ACTIVE_PLAYERS) {
+//                player.sendSystemMessage(Component.nullToEmpty("玩家uuid"+player.getUUID().toString()));
+//                player.sendSystemMessage(Component.nullToEmpty("玩家uuid1"+activePlayer.toString()));
+
+                if (player.getUUID().toString().equals(activePlayer.toString())) {
+
+                    ACTIVE_PLAYERS.add(player.getUUID());
+                    //SAVED_INVENTORIES.put(player.getUUID(), new InventoryState(player));
+
+                    if (level != null) {
+                        player.teleportTo(level, START_POS.getX() + 0.5, START_POS.getY(), START_POS.getZ() + 0.5,
+                                player.getYRot(), player.getXRot());
+                    }
+
+                    player.getInventory().armor.set(2, new ItemStack(Items.ELYTRA));
+                    player.sendSystemMessage(Component.literal("Battle Royale started!"));
+                }
+            }
+
         }
         active = true;
     }
@@ -48,26 +85,48 @@ public class BattleRoyaleManager {
     public static void stop(MinecraftServer server) {
         if (!active) return;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            player.sendSystemMessage(Component.literal("Battle Royale ended."));
-            restoreInventory(player);
+            for (UUID activePlayer : ACTIVE_PLAYERS) {
+                if (player.getUUID().equals(activePlayer)) {
+                    player.sendSystemMessage(Component.literal("大逃杀游戏结束获得胜利"));
+                    restoreInventory(player);
+                    teleportOut(player);
+                }
+            }
+
         }
         ACTIVE_PLAYERS.clear();
         SAVED_INVENTORIES.clear();
         active = false;
+        startTick = 0;
+        movedToArena = false;
     }
 
     public static void addPlayer(ServerPlayer player) {
-        if (active) {
+        //if (active) {
             ACTIVE_PLAYERS.add(player.getUUID());
             SAVED_INVENTORIES.putIfAbsent(player.getUUID(), new InventoryState(player));
+            ServerLevel level = player.server.getLevel(Level.OVERWORLD);
+//            if (level != null) {
+//                player.teleportTo(level, START_POS.getX() + 0.5, START_POS.getY(), START_POS.getZ() + 0.5,
+//                        player.getYRot(), player.getXRot());
+//            }
+            player.getInventory().armor.set(2, new ItemStack(Items.ELYTRA));
             player.sendSystemMessage(Component.literal("Joined the battle."));
-        }
+      //  }
     }
 
     public static void removePlayer(ServerPlayer player) {
         ACTIVE_PLAYERS.remove(player.getUUID());
         restoreInventory(player);
         SAVED_INVENTORIES.remove(player.getUUID());
+    }
+    public static boolean finduuid(UUID id){
+        for (UUID activePlayer : ACTIVE_PLAYERS) {
+            if (activePlayer.equals(id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -77,9 +136,9 @@ public class BattleRoyaleManager {
     public static void teleportOut(ServerPlayer player) {
         ServerLevel overworld = player.server.getLevel(Level.OVERWORLD);
         if (overworld != null) {
-            BlockPos pos = overworld.getSharedSpawnPos();
-            player.teleportTo(overworld, pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5,
-                    player.getYRot(), player.getXRot());
+                    player.teleportTo(overworld,
+                            OUT_POS.getX() + 0.5, OUT_POS.getY(), OUT_POS.getZ() + 0.5,
+                            player.getYRot(), player.getXRot());
         }
     }
 
@@ -88,11 +147,13 @@ public class BattleRoyaleManager {
      */
     public static void handleDeath(ServerPlayer player) {
         if (!active) return;
+        restoreInventory(player);
+        teleportOut(player);
         ACTIVE_PLAYERS.remove(player.getUUID());
         player.sendSystemMessage(Component.literal("You are out of the battle."));
 
         MinecraftServer server = player.server;
-        if (ACTIVE_PLAYERS.size() == 1) {
+        if (ACTIVE_PLAYERS.size() <= 1) {
             UUID winnerId = ACTIVE_PLAYERS.iterator().next();
             ServerPlayer winner = server.getPlayerList().getPlayer(winnerId);
             if (winner != null) {
@@ -161,4 +222,39 @@ public class BattleRoyaleManager {
             }
         }
     }
+    public static boolean canDealDamage(MinecraftServer server) {
+        if (!active) return true;
+        long elapsed = server.overworld().getGameTime() - startTick;
+        return elapsed >= DAMAGE_GRACE_TICKS;
+    }
+
+    public static void tick(ServerLevel level) {
+        if (!active) return;
+        long elapsed = level.getGameTime() - startTick;
+        if (elapsed >= ARENA_TIME_TICKS && !movedToArena) {
+            movedToArena = true;
+            for (UUID id : ACTIVE_PLAYERS) {
+                ServerPlayer p = level.getServer().getPlayerList().getPlayer(id);
+                if (p != null) {
+                    p.teleportTo(level, ARENA_POS.getX() + 0.5, ARENA_POS.getY(), ARENA_POS.getZ() + 0.5,
+                            p.getYRot(), p.getXRot());
+                }
+            }
+        }
+    }
+
+    public static void enforceBounds(ServerPlayer player) {
+        if (!active) return;
+        if (!ACTIVE_PLAYERS.contains(player.getUUID())) return;
+        double x = Mth.clamp(player.getX(), BOUNDS_MIN.getX(), BOUNDS_MAX.getX() + 1);
+        double y = Mth.clamp(player.getY(), BOUNDS_MIN.getY(), BOUNDS_MAX.getY() + 1);
+        double z = Mth.clamp(player.getZ(), BOUNDS_MIN.getZ(), BOUNDS_MAX.getZ() + 1);
+        if (x != player.getX() || y != player.getY() || z != player.getZ()) {
+
+        }else{
+
+            player.teleportTo(player.serverLevel(), x, y, z, player.getYRot(), player.getXRot());
+        }
+    }
+
 }
