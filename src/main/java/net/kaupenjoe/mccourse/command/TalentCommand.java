@@ -28,8 +28,7 @@ public class TalentCommand {
                                 .executes(ctx -> addPoints(ctx, IntegerArgumentType.getInteger(ctx, "amount")))))
                 .then(Commands.literal("unlock")
                         .then(Commands.argument("talent", StringArgumentType.word())
-                                .executes(this::unlock)))
-                .then(Commands.literal("gui").executes(this::openGui)));
+                                .executes(this::unlock))));
     }
 
     private int addPoints(CommandContext<CommandSourceStack> context, int amount) throws CommandSyntaxException {
@@ -60,11 +59,11 @@ public class TalentCommand {
         }
     }
 
-    private int openGui(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = context.getSource().getPlayer();
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-            Minecraft.getInstance().setScreen(new TalentTreeScreen(player));
-        });
-        return 1;
-    }
+//    private int openGui(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+//        ServerPlayer player = context.getSource().getPlayer();
+//        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+//            Minecraft.getInstance().setScreen(new TalentTreeScreen(player));
+//        });
+//        return 1;
+//    }
 }

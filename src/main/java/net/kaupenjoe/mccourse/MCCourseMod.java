@@ -6,6 +6,7 @@ import net.kaupenjoe.mccourse.block.ModBlocks;
 import net.kaupenjoe.mccourse.enchantment.ModEnchantments;
 import net.kaupenjoe.mccourse.item.ModCreativeModeTabs;
 import net.kaupenjoe.mccourse.item.ModItems;
+import net.kaupenjoe.mccourse.network.ModMessages;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.core.Registry;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -46,7 +47,7 @@ public class MCCourseMod {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-
+        ModMessages.register();
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {

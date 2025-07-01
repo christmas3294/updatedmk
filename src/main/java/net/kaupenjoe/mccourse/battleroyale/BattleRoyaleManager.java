@@ -1,7 +1,13 @@
 package net.kaupenjoe.mccourse.battleroyale;
 
+import net.kaupenjoe.mccourse.event.BattleRoyaleEvents;
+import net.kaupenjoe.mccourse.network.BattleRoyaleStateSyncS2CPacket;
+import net.kaupenjoe.mccourse.network.ModMessages;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -11,6 +17,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.border.WorldBorder;
 
 import java.util.*;
 
@@ -27,16 +34,31 @@ public class BattleRoyaleManager {
 
     private static final int DAMAGE_GRACE_TICKS = 20 * 10; // 10 seconds
     private static final int ARENA_TIME_TICKS = 20 * 60 * 10; // 10 minutes
-
+// //-436 320 -274
+//        //-22 96 -470
+    ///tp 10 92 318
     private static final BlockPos START_POS = new BlockPos(88, 132, 328);
     private static final BlockPos ARENA_POS = new BlockPos(147, 8, 287);
-    private static final BlockPos OUT_POS = new BlockPos(-237, 18, 334);
+    private static final BlockPos OUT_POS = new BlockPos(10, 92, 318);
 
     private static final BlockPos BOUNDS_MIN = new BlockPos(-29, 4, 412);
     private static final BlockPos BOUNDS_MAX = new BlockPos(188, 97, 154);
 
     private static MapBackup MAP_BACKUP;
     private static boolean movedToArena = false;
+
+
+    private static final int SHRINK_INTERVAL_TICKS = 20 * 60; // 1 minute
+    private static final int SHRINK_AMOUNT = 0;
+
+    private static BlockPos currentMin;
+    private static BlockPos currentMax;
+    private static long lastShrinkTick;
+
+    private static ServerLevel borderLevel;
+    private static double originalBorderSize;
+    private static double originalBorderX;
+    private static double originalBorderZ;
     private BattleRoyaleManager() {}
 
     public static boolean isActive() {
@@ -47,12 +69,33 @@ public class BattleRoyaleManager {
      * Starts a match with all currently online players.
      */
     public static void start(MinecraftServer server) {
+        ClientLevel level1 = Minecraft.getInstance().level;
+
 //        ACTIVE_PLAYERS.clear();
 //        SAVED_INVENTORIES.clear();
         startTick = server.overworld().getGameTime();
         movedToArena = false;
 
         ServerLevel level = server.getLevel(Level.OVERWORLD);
+        borderLevel = server.getLevel(Level.OVERWORLD);
+        currentMin = BOUNDS_MIN;
+        currentMax = BOUNDS_MAX;
+        lastShrinkTick = startTick;
+
+        if (borderLevel != null) {
+            WorldBorder wb = borderLevel.getWorldBorder();
+            originalBorderSize = wb.getSize();
+            originalBorderX = wb.getCenterX();
+            originalBorderZ = wb.getCenterZ();
+
+            double centerX = (currentMin.getX() + currentMax.getX()) / 2.0;
+            double centerZ = (currentMin.getZ() + currentMax.getZ()) / 2.0;
+            double sizeX = Math.abs(currentMax.getX() - currentMin.getX());
+            double sizeZ = Math.abs(currentMax.getZ() - currentMin.getZ());
+            double size = Math.max(sizeX, sizeZ);
+            wb.setCenter(centerX + 0.5, centerZ + 0.5);
+            wb.setSize(size);
+        }
 
 
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -72,11 +115,17 @@ public class BattleRoyaleManager {
 
                     player.getInventory().armor.set(2, new ItemStack(Items.ELYTRA));
                     player.sendSystemMessage(Component.literal("Battle Royale started!"));
+                    ModMessages.sendTo(new BattleRoyaleStateSyncS2CPacket(true, true), player);
                 }
             }
 
         }
         active = true;
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+            if (!ACTIVE_PLAYERS.contains(p.getUUID())) {
+                ModMessages.sendTo(new BattleRoyaleStateSyncS2CPacket(true, false), p);
+            }
+        }
     }
 
     /**
@@ -90,7 +139,11 @@ public class BattleRoyaleManager {
                     player.sendSystemMessage(Component.literal("大逃杀游戏结束获得胜利"));
                     restoreInventory(player);
                     teleportOut(player);
+                    ModMessages.sendTo(new BattleRoyaleStateSyncS2CPacket(false, false), player);
                 }
+
+                // Restore any blocks removed during the match
+                BattleRoyaleEvents.restoreBlocks(borderLevel != null ? borderLevel : server.overworld());
             }
 
         }
@@ -99,6 +152,11 @@ public class BattleRoyaleManager {
         active = false;
         startTick = 0;
         movedToArena = false;
+        currentMin = BOUNDS_MIN;
+        currentMax = BOUNDS_MAX;
+        for (ServerPlayer p : server.getPlayerList().getPlayers()) {
+            ModMessages.sendTo(new BattleRoyaleStateSyncS2CPacket(false, false), p);
+        }
     }
 
     public static void addPlayer(ServerPlayer player) {
@@ -119,6 +177,7 @@ public class BattleRoyaleManager {
         ACTIVE_PLAYERS.remove(player.getUUID());
         restoreInventory(player);
         SAVED_INVENTORIES.remove(player.getUUID());
+        ModMessages.sendTo(new BattleRoyaleStateSyncS2CPacket(active, false), player);
     }
     public static boolean finduuid(UUID id){
         for (UUID activePlayer : ACTIVE_PLAYERS) {
@@ -150,7 +209,7 @@ public class BattleRoyaleManager {
         restoreInventory(player);
         teleportOut(player);
         ACTIVE_PLAYERS.remove(player.getUUID());
-        player.sendSystemMessage(Component.literal("You are out of the battle."));
+        player.sendSystemMessage(Component.literal("你被击杀了。"));
 
         MinecraftServer server = player.server;
         if (ACTIVE_PLAYERS.size() <= 1) {
@@ -163,6 +222,7 @@ public class BattleRoyaleManager {
             stop(server);
         }
     }
+
 
     public static Set<UUID> getActivePlayers() {
         return Collections.unmodifiableSet(ACTIVE_PLAYERS);
@@ -241,20 +301,46 @@ public class BattleRoyaleManager {
                 }
             }
         }
+        if (level.getGameTime() - lastShrinkTick >= SHRINK_INTERVAL_TICKS) {
+            lastShrinkTick = level.getGameTime();
+            currentMin = currentMin.offset(-SHRINK_AMOUNT / 2, 0, -SHRINK_AMOUNT / 2);
+            currentMax = currentMax.offset(SHRINK_AMOUNT / 2, 0, SHRINK_AMOUNT / 2);
+
+            double centerX = (currentMin.getX() + currentMax.getX()) / 2.0;
+            double centerZ = (currentMin.getZ() + currentMax.getZ()) / 2.0;
+            double sizeX = Math.abs(currentMax.getX() - currentMin.getX());
+            double sizeZ = Math.abs(currentMax.getZ() - currentMin.getZ());
+            double size = Math.max(sizeX, sizeZ);
+
+            WorldBorder wb = level.getWorldBorder();
+            wb.setCenter(centerX + 0.5, centerZ + 0.5);
+            wb.lerpSizeBetween(wb.getSize(), size, SHRINK_INTERVAL_TICKS);
+        }
     }
 
     public static void enforceBounds(ServerPlayer player) {
         if (!active) return;
         if (!ACTIVE_PLAYERS.contains(player.getUUID())) return;
-        double x = Mth.clamp(player.getX(), BOUNDS_MIN.getX(), BOUNDS_MAX.getX() + 1);
-        double y = Mth.clamp(player.getY(), BOUNDS_MIN.getY(), BOUNDS_MAX.getY() + 1);
-        double z = Mth.clamp(player.getZ(), BOUNDS_MIN.getZ(), BOUNDS_MAX.getZ() + 1);
+        double x = Mth.clamp(player.getX(), currentMin.getX(), currentMax.getX() + 1);
+        double y = Mth.clamp(player.getY(), currentMin.getY(), currentMax.getY() + 1);
+        double z = Mth.clamp(player.getZ(), currentMin.getZ(), currentMax.getZ() + 1);
         if (x != player.getX() || y != player.getY() || z != player.getZ()) {
-
-        }else{
-
-            player.teleportTo(player.serverLevel(), x, y, z, player.getYRot(), player.getXRot());
+         //   player.teleportTo(player.serverLevel(), x, y, z, player.getYRot(), player.getXRot());
         }
+    }
+
+    public static boolean getroom(){
+        if (ACTIVE_PLAYERS.size() <=1 || ACTIVE_PLAYERS == null) return true; {
+
+        }
+        return false;
+    }
+
+    public static boolean getroomplayercount(){
+        if (ACTIVE_PLAYERS.size() >=2) {
+            return true;
+        }
+        return false;
     }
 
 }
