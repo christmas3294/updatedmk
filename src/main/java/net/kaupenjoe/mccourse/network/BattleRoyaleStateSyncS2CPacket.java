@@ -30,9 +30,9 @@ public class BattleRoyaleStateSyncS2CPacket {
             if (Minecraft.getInstance().player != null) {
                 if (active) {
                     String msg = participant ? "Battle Royale started!" : "Spectating battle.";
-                    Minecraft.getInstance().player.displayClientMessage(Component.literal(msg), false);
+                   // Minecraft.getInstance().player.displayClientMessage(Component.literal(msg), false);
                 } else {
-                    Minecraft.getInstance().player.displayClientMessage(Component.literal("Battle Royale ended."), false);
+                   // Minecraft.getInstance().player.displayClientMessage(Component.literal("Battle Royale ended."), false);
                 }
             }
         });

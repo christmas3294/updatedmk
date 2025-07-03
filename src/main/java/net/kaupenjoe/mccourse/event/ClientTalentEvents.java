@@ -1,8 +1,6 @@
 package net.kaupenjoe.mccourse.event;
 
 import net.kaupenjoe.mccourse.MCCourseMod;
-import net.kaupenjoe.mccourse.talent.TalentTreeScreen;
-import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;

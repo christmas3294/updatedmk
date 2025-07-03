@@ -5,6 +5,8 @@ import net.kaupenjoe.mccourse.battleroyale.BattleRoyaleCommand;
 import net.kaupenjoe.mccourse.battleroyale.BattleRoyaleManager;
 import net.kaupenjoe.mccourse.battleroyale.ChestSnapshot;
 import net.kaupenjoe.mccourse.command.RestoreMapCommand;
+import net.kaupenjoe.mccourse.network.BattleRoyaleStateSyncS2CPacket;
+import net.kaupenjoe.mccourse.network.ModMessages;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -33,6 +35,7 @@ public class BattleRoyaleEvents {
     public static void onCommandsRegister(RegisterCommandsEvent event) {
         new BattleRoyaleCommand(event.getDispatcher());
         new RestoreMapCommand(event.getDispatcher());
+
     }
 
     @SubscribeEvent
@@ -83,11 +86,12 @@ public class BattleRoyaleEvents {
             }
         }
     }
-
+    public static ServerPlayer playeronline;
     // 玩家加入服务器事件
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            playeronline =player;
             if (BattleRoyaleManager.isActive()) {
                 if (BattleRoyaleManager.finduuid(player.getUUID())) {
                     BattleRoyaleManager.teleportOut(player);
@@ -99,13 +103,21 @@ public class BattleRoyaleEvents {
                 BattleRoyaleManager.removePlayer(player);
 
             }
+//            ModMessages.sendTo(new BattleRoyaleStateSyncS2CPacket(BattleRoyaleManager.isActive(),
+//                    BattleRoyaleManager.getActivePlayers().contains(player.getUUID())), player);
         }
+
+
     }
 
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
             if (BattleRoyaleManager.finduuid(player.getUUID())) {
+                BattleRoyaleManager.teleportOut(player);
+            }
+            if (BattleRoyaleManager.finduuid(player.getUUID())) {
+
                 BattleRoyaleManager.handleDeath(player);
             }
 

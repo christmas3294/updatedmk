@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 public class MCCourseMod {
     public static final String MOD_ID = "mccourse";
     public static final Logger LOGGER = LogUtils.getLogger();
-
+public static int checklevel = 1;
     public MCCourseMod() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 

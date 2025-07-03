@@ -2,8 +2,8 @@ package net.kaupenjoe.mccourse.battleroyale;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-import net.kaupenjoe.mccourse.battleroyale.BattleRoyaleManager;
-import net.minecraft.client.Minecraft;
+import net.kaupenjoe.mccourse.network.ModMessages;
+import net.kaupenjoe.mccourse.network.OpenTalentScreenS2CPacket;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -12,6 +12,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 /**
  * Basic command for managing a simple battle royale match.
@@ -30,20 +32,26 @@ public class BattleRoyaleCommand {
 
     private int start(CommandContext<CommandSourceStack> context) {
         MinecraftServer server = context.getSource().getServer();
-        if (BattleRoyaleManager.isActive()) {
-            context.getSource().sendFailure(Component.literal("Battle already running."));
-            return 0;
-        }
+        if (BattleRoyaleCommand.ismap !=null) {
+            if (BattleRoyaleManager.isActive()) {
+                context.getSource().sendFailure(Component.literal("Battle already running."));
+                return 0;
+            }   //  context.getSource().sendSuccess(() -> Component.literal("房间开始"), true);
 
-        if (BattleRoyaleManager.getroomplayercount()) {
+            if (BattleRoyaleManager.getroomplayercount()) {
 
-                //Component.literal(dimension.location().getPath()
-                BattleRoyaleManager.start(server);
                 context.getSource().sendSuccess(() -> Component.literal("房间开始游戏"), true);
+                //Component.literal(dimension.location().getPath()
+                BattleRoyaleManager.start(server,context);
 
 
 
+
+            }else {
+                context.getSource().getPlayer().sendSystemMessage(Component.literal("房间人数小于两人"), true);
+            }
         }
+
 
         return 1;
     }
@@ -62,20 +70,57 @@ public class BattleRoyaleCommand {
 
         return 0;
     }
+    @OnlyIn(Dist.CLIENT)
+    public boolean opengui(CommandContext<CommandSourceStack> context){
+        ModMessages.send(context.getSource().getPlayer());
+        return true;
+    }
+
+public static ServerLevel ismap = null;
 
     private int join(CommandContext<CommandSourceStack> context) {
-
         ServerPlayer player = context.getSource().getPlayer();
-        ResourceKey<Level> dimension = player.level().dimension();
 
+        ModMessages.sendTo(new OpenTalentScreenS2CPacket(), player);
+
+        // 例如在某个指令/事件/物品use中
+
+        //  Minecraft.getInstance().execute(() -> Minecraft.getInstance().setScreen(new TalentScreen()));
+//        if (Minecraft.getInstance().level != null && Minecraft.getInstance().level.isClientSide()) {
+//            Minecraft.getInstance().setScreen(new TalentScreen());
+//        }
+//        if (FMLCommonSetupEvent.getDist() == Dist.CLIENT) {
+//            Minecraft.getInstance().setScreen(new TalentScreen());
+//        }
+
+        //   Player player1 = context.getSource().getPlayer();
+     //   Minecraft.getInstance().setScreen(new TalentScreen());
+      //  ServerPlayer player = context.getSource().getPlayer();
+        ResourceKey<Level> dimension = player.level().dimension();
+   //     if (player.level().dimension().equals("gangame")) {
+
+            ismap = player.level().getServer().getLevel(dimension);
+      //  context.getSource().getPlayer().sendSystemMessage(Component.nullToEmpty(ismap.toString()));
+      //  context.getSource().sendSuccess(() -> Component.literal(String.valueOf(ismap)), false);
+        if (ismap.toString().contains("gangame")) {
+          //  context.getSource().sendSuccess(() -> Component.literal("加入房间"), false);
+            //        player.sendSystemMessage(Component.literal(String.valueOf(dimension)), true);
+//        player.sendSystemMessage(Component.literal(String.valueOf(ismap)), true);
             //player.sendSystemMessage(Component.literal(dimension.location().getPath()));
             if (!BattleRoyaleManager.isActive()) {
-                // context.getSource().sendFailure(Component.literal("No active battle."));
-                //return 0;
-                BattleRoyaleManager.addPlayer(player);
-                context.getSource().sendSuccess(() -> Component.literal("加入房间"), false);
-            }
+                if (!BattleRoyaleManager.finduuid(context.getSource().getPlayer().getUUID())) {
+                    BattleRoyaleManager.teleportOut(context.getSource().getPlayer());
+                    // context.getSource().sendFailure(Component.literal("No active battle."));
+                    //return 0;
+                    BattleRoyaleManager.addPlayer(player);
+                    context.getSource().sendSuccess(() -> Component.literal("加入房间"), false);
+                }else {
+                    context.getSource().sendSuccess(() -> Component.literal("已经加入房间"), false);
+                }
 
+            }
+            //  }
+        }
        else{
             player.sendSystemMessage(Component.literal("你需要去到枪械地图世界"));
         }
