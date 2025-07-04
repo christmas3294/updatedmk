@@ -20,6 +20,7 @@ int newlevel = 1;
     PlayerSkillData playerSkillData;
     TalentScreen.TalentNode node;
     public OpenTalentScreenS2CPacketLevel(PlayerSkillData skillData, TalentScreen.TalentNode node, int newLevel) {
+
 //      switch (newLevel) {
 //          case 0:
 //          {

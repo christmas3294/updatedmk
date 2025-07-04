@@ -2,10 +2,15 @@ package net.kaupenjoe.mccourse.battleroyale;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
+import net.kaupenjoe.mccourse.MCCourseMod;
+import net.kaupenjoe.mccourse.nbt.PlayerSkillData;
+import net.kaupenjoe.mccourse.nbt.PlayerSkillHandler;
 import net.kaupenjoe.mccourse.network.ModMessages;
 import net.kaupenjoe.mccourse.network.OpenTalentScreenS2CPacket;
+import net.kaupenjoe.mccourse.network.OpenTalentScreenS2CPacketLevel;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -80,8 +85,10 @@ public static ServerLevel ismap = null;
 
     private int join(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = context.getSource().getPlayer();
+        CompoundTag skillData = PlayerSkillHandler.getSkillData(player);
+        MCCourseMod.tag = skillData;
 
-        ModMessages.sendTo(new OpenTalentScreenS2CPacket(), player);
+        ModMessages.sendTo(new OpenTalentScreenS2CPacket(skillData), player);
 
         // 例如在某个指令/事件/物品use中
 
@@ -126,5 +133,15 @@ public static ServerLevel ismap = null;
         }
 
         return 1;
+    }
+
+
+    public static void updateSkillLevel(ServerPlayer player, int skillIndex, int newLevel) {
+//        PlayerSkillData skillData = PlayerSkillHandler.getSkillData(player);
+//        skillData.setSkillLevel(skillIndex, newLevel);
+//        PlayerSkillHandler.saveSkillData(player, skillData);
+
+        // 向客户端发送更新后的技能数据
+      //  ModMessages.sendTo(new OpenTalentScreenS2CPacketLevel(skillData, skillIndex, newLevel), player);
     }
 }
