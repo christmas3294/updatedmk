@@ -5,28 +5,35 @@ import net.kaupenjoe.mccourse.battleroyale.BattleRoyaleCommand;
 import net.kaupenjoe.mccourse.battleroyale.BattleRoyaleManager;
 import net.kaupenjoe.mccourse.battleroyale.ChestSnapshot;
 import net.kaupenjoe.mccourse.command.RestoreMapCommand;
+import net.kaupenjoe.mccourse.nbt.PlayerSkillHandler;
 import net.kaupenjoe.mccourse.network.BattleRoyaleStateSyncS2CPacket;
 import net.kaupenjoe.mccourse.network.ModMessages;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = MCCourseMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class BattleRoyaleEvents {
@@ -202,4 +209,36 @@ public class BattleRoyaleEvents {
 
 
     }
+
+    @SubscribeEvent
+    public static void playeritemevent(PlayerEvent.ItemCraftedEvent event) {
+        Player player = event.getEntity();
+        // 获取合成的物品
+        ItemStack craftedItem = event.getCrafting();
+
+        player.sendSystemMessage(Component.nullToEmpty(craftedItem.getDisplayName().getString()));
+
+    }
+
+
+    @SubscribeEvent
+    public static void onInventoryChange(PlayerInteractEvent event) {
+        event.getEntity().getInventory().items.forEach(item -> {
+            event.getEntity().sendSystemMessage(Component.nullToEmpty(item.getDisplayName().getString()));
+        });
+    }
+
+        @SubscribeEvent
+    public static void onJump(LivingEvent.LivingJumpEvent event) {
+//Player player = event.getEntity();
+////        ServerPlayer player1 = player.getServer().getPlayerList().getPlayer(player.getGameProfile().getId());
+////        CompoundTag skillData = PlayerSkillHandler.getSkillData(player1);
+////        int jumolevel = skillData.getInt(String.valueOf(2));
+////        player1.addDeltaMovement(player.getDeltaMovement().normalize().multiply(new Vec3(jumolevel,jumolevel,jumolevel)));
+
+            if (event.getEntity() instanceof Player player) {
+         
+            }
+        }
+
 }

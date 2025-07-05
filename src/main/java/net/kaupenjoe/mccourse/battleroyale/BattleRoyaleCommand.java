@@ -8,6 +8,7 @@ import net.kaupenjoe.mccourse.nbt.PlayerSkillHandler;
 import net.kaupenjoe.mccourse.network.ModMessages;
 import net.kaupenjoe.mccourse.network.OpenTalentScreenS2CPacket;
 import net.kaupenjoe.mccourse.network.OpenTalentScreenS2CPacketLevel;
+import net.kaupenjoe.mccourse.network.playerserverSyncS2CPacket;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.nbt.CompoundTag;
@@ -19,6 +20,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+
+import java.util.HashMap;
 
 /**
  * Basic command for managing a simple battle royale match.
@@ -82,14 +85,16 @@ public class BattleRoyaleCommand {
     }
 
 public static ServerLevel ismap = null;
-
+public static HashMap<String,ServerPlayer> playerserver = new HashMap<>();
     private int join(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = context.getSource().getPlayer();
+        ModMessages.sendTo(new playerserverSyncS2CPacket(player,playerserver),player);
         CompoundTag skillData = PlayerSkillHandler.getSkillData(player);
-        MCCourseMod.tag = skillData;
-
-        ModMessages.sendTo(new OpenTalentScreenS2CPacket(skillData), player);
-
+      //  MCCourseMod.tag = skillData;
+       // playerserver.put(player.getDisplayName().getString(), player);
+        player.sendSystemMessage(Component.literal(player.getDisplayName().getString()));
+        ModMessages.sendTo(new OpenTalentScreenS2CPacket(skillData,player), player);
+        playerserver.put(player.getDisplayName().getString(),player);
         // 例如在某个指令/事件/物品use中
 
         //  Minecraft.getInstance().execute(() -> Minecraft.getInstance().setScreen(new TalentScreen()));

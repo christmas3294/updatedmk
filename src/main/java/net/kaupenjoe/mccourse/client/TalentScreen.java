@@ -8,6 +8,7 @@
     import net.kaupenjoe.mccourse.nbt.PlayerSkillHandler;
     import net.kaupenjoe.mccourse.network.ModMessages;
     import net.kaupenjoe.mccourse.network.OpenTalentScreenS2CPacketLevel;
+    import net.kaupenjoe.mccourse.network.UpdateSkillLevelC2SPacket;
     import net.minecraft.client.Minecraft;
     import net.minecraft.client.gui.screens.Screen;
     import net.minecraft.client.gui.GuiGraphics;
@@ -78,19 +79,19 @@
 
 
         public int getlevel(int  levelindex){
-            return MCCourseMod.hashMap.get(levelindex);
+            return  this.playerSkillData.getInt(String.valueOf(levelindex));
         }
         public void setSkillLevel(int skillIndex, int level) {
             skillLevels.put(skillIndex, level);
         }
 
-        public int getSkillLevel(int skillIndex) {
-            return skillLevels.getOrDefault(skillIndex, 0);
-        }
-        public TalentScreen(CompoundTag playerSkillData) {
-
+//        public int getSkillLevel(int skillIndex) {
+//            return skillLevels.getOrDefault(skillIndex, 0);
+//        }
+        public TalentScreen(CompoundTag tag) {
+          //  CompoundTag playerSkillData,ServerPlayer player
             super(Component.literal("\u5929\u8d4b\u7cfb\u7edf"));
-            this.playerSkillData = playerSkillData;
+            this.playerSkillData = tag;
          //   MinecraftServer server = context.getSource().getServer();
     //        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
     //            player.sendSystemMessage(Component.nullToEmpty("TalentScreen"));
@@ -98,9 +99,9 @@
     //getSkillData
 //            Minecraft.getInstance().player.sendSystemMessage(Component.nullToEmpty(String.valueOf(playerSkillData)));
      //  Minecraft.getInstance().player.sendSystemMessage(Component.nullToEmpty(String.valueOf(MCCourseMod.tag)));
-
+          //  PlayerSkillHandler.getSkillData(player);
             nodes.add(new TalentNode(60, 40,
-                    new ResourceLocation(MCCourseMod.MOD_ID, "textures/gui/rpg_icons.png"),"挖掘",getlevel(1),1));
+                    new ResourceLocation(MCCourseMod.MOD_ID, "textures/gui/rpg_icons.png"),"挖掘",1,1));
             nodes.add(new TalentNode(100, 40,
                     new ResourceLocation(MCCourseMod.MOD_ID, "textures/gui/rpg_icons.png"),"喜欢挖掘",getlevel(2),2));
     //        nodes.add(new TalentNode(140, 40,
@@ -154,12 +155,12 @@
                   guiGraphics.blit(node.icon, node.x,node.y, (int) getx(getlevel(node.index)), (int) gety(node.index), 20, 20);
                // guiGraphics.blit(node.icon, node.x,node.y, (int) getx(node.SkilLevel), (int) gety(node.index)*i, 20,20);
                 if (hovered) {
-    //                guiGraphics.drawCenteredString(this.font, "技能等级"+PlayerSkillHandler.getSkillData(BattleRoyaleEvents.playeronline).getSkillLevel(node.index),
-    //                        node.x, node.y, 0xFFFF00);
+//                    guiGraphics.drawCenteredString(this.font, "技能等级"+PlayerSkillHandler.getSkillData(BattleRoyaleEvents.playeronline).getSkillLevel(node.index),
+//                            node.x, node.y, 0xFFFF00);
                 }else {
 
-    //                guiGraphics.drawCenteredString(this.font, "Lv:"+PlayerSkillHandler.getSkillData(BattleRoyaleEvents.playeronline).getSkillLevel(node.index),
-    //                        node.x, node.y, 0xFFFF00);
+                    guiGraphics.drawCenteredString(this.font, "Lv:"+getlevel(node.index),
+                            node.x, node.y, 0xFFFF00);
                 }
     //            if (node.unlocked) {
     //                guiGraphics.drawCenteredString(this.font, "\u221a",
@@ -196,10 +197,10 @@
     switch (node.index) {
         case 1:
         {
-            if (BattleRoyaleEvents.playeronline !=null) {
-                ServerPlayer player = BattleRoyaleEvents.playeronline;
-            //    ModMessages.sendTo(new OpenTalentScreenS2CPacketLevel(player,node,0),player);
-            }
+//            if (BattleRoyaleEvents.playeronline !=null) {
+//                ServerPlayer player = BattleRoyaleEvents.playeronline;
+//            //    ModMessages.sendTo(new OpenTalentScreenS2CPacketLevel(player,node,0),player);
+//            }
 
         };
 //            case 2:{
@@ -208,6 +209,10 @@
 //                    ModMessages.sendTo(new OpenTalentScreenS2CPacketLevel(player,node,0),player);
 //                }
         case 2:{
+
+            ModMessages.INSTANCE.sendToServer(
+                 //   new UpdateSkillLevelC2SPacket(node.index, node.getSkilLevel() + 1));
+                    new UpdateSkillLevelC2SPacket(node.index, getlevel(node.index) + 1));
             // 升级技能并保存
 //            if (BattleRoyaleEvents.playeronline != null) {
 ////                ServerPlayer player = BattleRoyaleEvents.playeronline;
@@ -226,9 +231,9 @@
 ////                player.sendSystemMessage(Component.nullToEmpty(String.valueOf(skillData.getSkillLevel(2))));
 //            }
 
-            Integer i = MCCourseMod.hashMap.get(2);
-i +=1;
-MCCourseMod.hashMap.put(2, i);
+//            Integer i = MCCourseMod.hashMap.get(2);
+//i +=1;
+//MCCourseMod.hashMap.put(2, i);
           //  PlayerSkillData.saveToNBT(playerSkillData);
 
         }
@@ -246,4 +251,8 @@ MCCourseMod.hashMap.put(2, i);
         public boolean isPauseScreen() {
             return false;
         }
+
+
+
+
     }

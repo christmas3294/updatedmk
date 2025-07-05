@@ -1,8 +1,10 @@
 package net.kaupenjoe.mccourse.event;
 
 import net.kaupenjoe.mccourse.MCCourseMod;
+import net.kaupenjoe.mccourse.nbt.PlayerSkillHandler;
 import net.kaupenjoe.mccourse.talent.PlayerTalentData;
 import net.kaupenjoe.mccourse.talent.Talent;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,24 +31,33 @@ public class TalentEvents {
         PlayerTalentData.copyFrom(event.getOriginal(), event.getEntity());
     }
 
-    @SubscribeEvent
-    public static void onJump(PlayerInteractEvent.LeftClickEmpty event) {
-        Player player = event.getEntity();
-
-        for (Talent talent : Talent.values()) {
-                int count = PlayerTalentData.getTalentCount(player, talent);
-                if (talent.getName().equals("技能A")) {
-                    if (count >0){
-
-                        talent.setCount(count);
-                        player.sendSystemMessage(Component.nullToEmpty(String.valueOf(count)));
-                     //   Vec3 multiply = player.getDeltaMovement().normalize().multiply(count, count, count);
-                    }
-
-                }
-            }
-
-    }
+//    @SubscribeEvent
+//    public static void onJump(PlayerInteractEvent.LeftClickEmpty event) {
+////      if (event.getEntity() != null){
+////
+////      }
+//        Player player = event.getEntity();
+//        ServerPlayer player1 = player.getServer().getPlayerList().getPlayer(player.getGameProfile().getId());
+//        CompoundTag skillData = PlayerSkillHandler.getSkillData(player1);
+//        int jumolevel = skillData.getInt(String.valueOf(2));
+//        player1.addDeltaMovement(player.getDeltaMovement().normalize().multiply(new Vec3(jumolevel,jumolevel,jumolevel)));
+//    }
+//        Player player = event.getEntity();
+//
+//        for (Talent talent : Talent.values()) {
+//                int count = PlayerTalentData.getTalentCount(player, talent);
+//                if (talent.getName().equals("技能A")) {
+//                    if (count >0){
+//
+//                        talent.setCount(count);
+//                        player.sendSystemMessage(Component.nullToEmpty(String.valueOf(count)));
+//                     //   Vec3 multiply = player.getDeltaMovement().normalize().multiply(count, count, count);
+//                    }
+//
+//                }
+//            }
+//
+//    }
 
     /**
      * Applies the talent effect identified by {@code name} to the given player.

@@ -43,6 +43,24 @@ public class ModMessages {
                 .consumerMainThread(OpenTalentScreenS2CPacketLevel::handle)
                 .add();
 
+        INSTANCE.messageBuilder(UpdateSkillLevelC2SPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .decoder(UpdateSkillLevelC2SPacket::new)
+                .encoder(UpdateSkillLevelC2SPacket::toBytes)
+                .consumerMainThread(UpdateSkillLevelC2SPacket::handle)
+                .add();
+
+        INSTANCE.messageBuilder(playerserverSyncS2CPacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
+                .decoder(playerserverSyncS2CPacket::new)
+                .encoder(playerserverSyncS2CPacket::toBytes)
+                .consumerMainThread(playerserverSyncS2CPacket::handle)
+                .add();
+        INSTANCE.messageBuilder(playerserverSyncS2CPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(playerserverSyncS2CPacket::new)
+                .encoder(playerserverSyncS2CPacket::toBytes)
+                .consumerMainThread(playerserverSyncS2CPacket::handle)
+                .add();
+
+
 
     }
     public static void send(ServerPlayer player){

@@ -42,11 +42,15 @@ int newlevel = 1;
 
     }
 
-    public OpenTalentScreenS2CPacketLevel(FriendlyByteBuf friendlyByteBuf) {
+    public OpenTalentScreenS2CPacketLevel(FriendlyByteBuf buf) {
+        this.playerSkillData = new PlayerSkillData();
+        this.newlevel = buf.readVarInt();
+        // TODO: consider reading skill data if needed
     }
 
     public void toBytes(FriendlyByteBuf buf) {
         // no data
+        buf.writeVarInt(newlevel);
     }
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {
