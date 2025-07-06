@@ -2,6 +2,7 @@ package net.kaupenjoe.mccourse.battleroyale;
 
 import com.mojang.brigadier.context.CommandContext;
 import net.kaupenjoe.mccourse.event.BattleRoyaleEvents;
+import net.kaupenjoe.mccourse.nbt.PlayerSkillHandler;
 import net.kaupenjoe.mccourse.network.BattleRoyaleDataSyncS2CPacket;
 import net.kaupenjoe.mccourse.network.BattleRoyaleStateSyncS2CPacket;
 import net.kaupenjoe.mccourse.network.ModMessages;
@@ -10,6 +11,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -208,7 +210,7 @@ public class BattleRoyaleManager {
                 if (player.getUUID().equals(activePlayer)) {
                     player.sendSystemMessage(Component.literal("大逃杀游戏结束获得胜利"));
                     restoreInventory(player);
-                    teleportOut(player);
+                    teleportOut(player,1);
                     ModMessages.sendTo(new BattleRoyaleStateSyncS2CPacket(false, false), player);
                 }
 
@@ -271,13 +273,22 @@ public class BattleRoyaleManager {
      * Moves the given player to the world spawn of the overworld. Used when
      * players leave the battle so they respawn outside of the arena.
      */
-    public static void teleportOut(ServerPlayer player) {
+    public static void teleportOut(ServerPlayer player,int mode) {
         ServerLevel overworld = BattleRoyaleCommand.ismap;
-        if (overworld != null) {
-                    player.teleportTo(overworld,
-                            OUT_POS.getX() + 0.5, OUT_POS.getY(), OUT_POS.getZ() + 0.5,
-                            player.getYRot(), player.getXRot());
+        if (mode == 1){
+            player.teleportTo(player.getServer().overworld(),
+                    OUT_POS.getX() + 0.5, OUT_POS.getY(), OUT_POS.getZ() + 0.5,
+                    player.getYRot(), player.getXRot());
+
+        }else {
+            if (overworld != null) {
+                player.teleportTo(overworld,
+                        OUT_POS.getX() + 0.5, OUT_POS.getY(), OUT_POS.getZ() + 0.5,
+                        player.getYRot(), player.getXRot());
+            }
+
         }
+
     }
 
     /**
@@ -286,7 +297,7 @@ public class BattleRoyaleManager {
     public static void handleDeath(ServerPlayer player) {
         if (!active) return;
         restoreInventory(player);
-        teleportOut(player);
+        teleportOut(player,1);
         ACTIVE_PLAYERS.remove(player.getUUID());
         player.sendSystemMessage(Component.literal("你被击杀了。"));
 
@@ -298,6 +309,10 @@ public class BattleRoyaleManager {
             UUID winnerId = ACTIVE_PLAYERS.iterator().next();
             ServerPlayer winner = server.getPlayerList().getPlayer(winnerId);
             if (winner != null) {
+                CompoundTag data = PlayerSkillHandler.getSkillData(winner);
+                int current = data.getInt(String.valueOf("4"));
+                PlayerSkillHandler.setSkillLevel(player, 4, current + 1);
+                PlayerSkillHandler.syncToClient(player);
                 server.getPlayerList().broadcastSystemMessage(
                         Component.literal(winner.getName().getString() + " wins the battle!"), false);
             }

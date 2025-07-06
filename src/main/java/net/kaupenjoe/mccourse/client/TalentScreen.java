@@ -101,13 +101,13 @@
      //  Minecraft.getInstance().player.sendSystemMessage(Component.nullToEmpty(String.valueOf(MCCourseMod.tag)));
           //  PlayerSkillHandler.getSkillData(player);
             nodes.add(new TalentNode(60, 40,
-                    new ResourceLocation(MCCourseMod.MOD_ID, "textures/gui/rpg_icons.png"),"挖掘",1,1));
+                    new ResourceLocation(MCCourseMod.MOD_ID, "textures/gui/rpg_icons.png"),"熔炉燃烧",getlevel(1),1));
             nodes.add(new TalentNode(100, 40,
-                    new ResourceLocation(MCCourseMod.MOD_ID, "textures/gui/rpg_icons.png"),"喜欢挖掘",getlevel(2),2));
-    //        nodes.add(new TalentNode(140, 40,
-    //                new ResourceLocation(MCCourseMod.MOD_ID, "textures/gui/rpg_icons.png"),"这下挖掘了",1,3));
-    //        nodes.add(new TalentNode(180, 40,
-    //                new ResourceLocation(MCCourseMod.MOD_ID, "textures/gui/rpg_icons.png"),"这下挖掘了",2,4));
+                    new ResourceLocation(MCCourseMod.MOD_ID, "textures/gui/rpg_icons.png"),"工作台合成概率提高天赋 成功合成4个钻石块升级",getlevel(2),2));
+            nodes.add(new TalentNode(140, 40,
+                    new ResourceLocation(MCCourseMod.MOD_ID, "textures/gui/rpg_icons.png"),"击杀玩家后可抢夺玩家物品概率 击杀10个苦力怕升级",getlevel(3),3));
+            nodes.add(new TalentNode(180, 40,
+                    new ResourceLocation(MCCourseMod.MOD_ID, "textures/gui/rpg_icons.png"),"枪械减伤 大逃杀获胜者升级",getlevel(4),4));
     //        nodes.add(new TalentNode(60, 70,
     //                new ResourceLocation(MCCourseMod.MOD_ID, "textures/gui/rpg_icons.png"),"这下挖掘了",2,5));
     //        nodes.add(new TalentNode(100, 70,
@@ -155,8 +155,8 @@
                   guiGraphics.blit(node.icon, node.x,node.y, (int) getx(getlevel(node.index)), (int) gety(node.index), 20, 20);
                // guiGraphics.blit(node.icon, node.x,node.y, (int) getx(node.SkilLevel), (int) gety(node.index)*i, 20,20);
                 if (hovered) {
-//                    guiGraphics.drawCenteredString(this.font, "技能等级"+PlayerSkillHandler.getSkillData(BattleRoyaleEvents.playeronline).getSkillLevel(node.index),
-//                            node.x, node.y, 0xFFFF00);
+                    guiGraphics.drawCenteredString(this.font, "升级要求"+node.Skilname,
+                            node.x, node.y, 0xFFFF00);
                 }else {
 
                     guiGraphics.drawCenteredString(this.font, "Lv:"+getlevel(node.index),
@@ -192,58 +192,58 @@
 
         @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            for (TalentNode node : nodes) {
-                if (isMouseOverNode((int) mouseX, (int) mouseY, node)) {
-    switch (node.index) {
-        case 1:
-        {
-//            if (BattleRoyaleEvents.playeronline !=null) {
-//                ServerPlayer player = BattleRoyaleEvents.playeronline;
-//            //    ModMessages.sendTo(new OpenTalentScreenS2CPacketLevel(player,node,0),player);
-//            }
-
-        };
-//            case 2:{
-//                if (BattleRoyaleEvents.playeronline !=null) {
-//                    ServerPlayer player = BattleRoyaleEvents.playeronline;
-//                    ModMessages.sendTo(new OpenTalentScreenS2CPacketLevel(player,node,0),player);
-//                }
-        case 2:{
-
-            ModMessages.INSTANCE.sendToServer(
-                 //   new UpdateSkillLevelC2SPacket(node.index, node.getSkilLevel() + 1));
-                    new UpdateSkillLevelC2SPacket(node.index, getlevel(node.index) + 1));
-            // 升级技能并保存
-//            if (BattleRoyaleEvents.playeronline != null) {
+//            for (TalentNode node : nodes) {
+//                if (isMouseOverNode((int) mouseX, (int) mouseY, node)) {
+//    switch (node.index) {
+//        case 1:
+//        {
+////            if (BattleRoyaleEvents.playeronline !=null) {
 ////                ServerPlayer player = BattleRoyaleEvents.playeronline;
-////                PlayerSkillData skillData = PlayerSkillHandler.getSkillData(player);
-////
-////                // 更新技能等级
-////                int currentLevel = skillData.getSkillLevel(node.index);
-////                int newLevel = currentLevel + 1; // 假设每次点击就升一级
-////                skillData.setSkillLevel(node.index, newLevel);
-////
-////                // 保存更新后的技能等级
-////                PlayerSkillHandler.saveSkillData(player, skillData);
-////
-////                // 发送更新后的数据到客户端
-////                ModMessages.sendTo(new OpenTalentScreenS2CPacketLevel(skillData, node, newLevel), player);
-////                player.sendSystemMessage(Component.nullToEmpty(String.valueOf(skillData.getSkillLevel(2))));
+////            //    ModMessages.sendTo(new OpenTalentScreenS2CPacketLevel(player,node,0),player);
+////            }
+//
+//        };
+////            case 2:{
+////                if (BattleRoyaleEvents.playeronline !=null) {
+////                    ServerPlayer player = BattleRoyaleEvents.playeronline;
+////                    ModMessages.sendTo(new OpenTalentScreenS2CPacketLevel(player,node,0),player);
+////                }
+//        case 2:{
+//
+////            ModMessages.INSTANCE.sendToServer(
+////                 //   new UpdateSkillLevelC2SPacket(node.index, node.getSkilLevel() + 1));
+////                    new UpdateSkillLevelC2SPacket(node.index, getlevel(node.index) + 1));
+//            // 升级技能并保存
+////            if (BattleRoyaleEvents.playeronline != null) {
+//////                ServerPlayer player = BattleRoyaleEvents.playeronline;
+//////                PlayerSkillData skillData = PlayerSkillHandler.getSkillData(player);
+//////
+//////                // 更新技能等级
+//////                int currentLevel = skillData.getSkillLevel(node.index);
+//////                int newLevel = currentLevel + 1; // 假设每次点击就升一级
+//////                skillData.setSkillLevel(node.index, newLevel);
+//////
+//////                // 保存更新后的技能等级
+//////                PlayerSkillHandler.saveSkillData(player, skillData);
+//////
+//////                // 发送更新后的数据到客户端
+//////                ModMessages.sendTo(new OpenTalentScreenS2CPacketLevel(skillData, node, newLevel), player);
+//////                player.sendSystemMessage(Component.nullToEmpty(String.valueOf(skillData.getSkillLevel(2))));
+////            }
+//
+////            Integer i = MCCourseMod.hashMap.get(2);
+////i +=1;
+////MCCourseMod.hashMap.put(2, i);
+//          //  PlayerSkillData.saveToNBT(playerSkillData);
+//
+//        }
+//    }
+//                    //nodes
+//                    //实现服务器数据同步
+//                    //玩家点击需要查看玩家的金币 2000金币升级一次
+//                    return true;
+//                }
 //            }
-
-//            Integer i = MCCourseMod.hashMap.get(2);
-//i +=1;
-//MCCourseMod.hashMap.put(2, i);
-          //  PlayerSkillData.saveToNBT(playerSkillData);
-
-        }
-    }
-                    //nodes
-                    //实现服务器数据同步
-                    //玩家点击需要查看玩家的金币 2000金币升级一次
-                    return true;
-                }
-            }
             return super.mouseClicked(mouseX, mouseY, button);
         }
 

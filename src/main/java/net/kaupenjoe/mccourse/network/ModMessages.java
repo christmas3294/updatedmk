@@ -1,5 +1,6 @@
 package net.kaupenjoe.mccourse.network;
 import net.kaupenjoe.mccourse.MCCourseMod;
+import net.kaupenjoe.mccourse.csgodemo.network.BombStateSyncS2CPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.network.NetworkDirection;
@@ -60,6 +61,14 @@ public class ModMessages {
                 .consumerMainThread(playerserverSyncS2CPacket::handle)
                 .add();
 
+        //csgo爆破模式通信注册
+
+        INSTANCE.messageBuilder(BombStateSyncS2CPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(BombStateSyncS2CPacket::new)
+                .encoder(BombStateSyncS2CPacket::toBytes)
+                .consumerMainThread(BombStateSyncS2CPacket::handle)
+                .add();
+
 
 
     }
@@ -77,4 +86,11 @@ public class ModMessages {
             sendTo(message, player);
         }
     }
+
+//    public static void sendToAll(Object message, MinecraftServer server,int ) {
+//        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+//
+//            sendTo(message, player);
+//        }
+//    }
 }

@@ -35,6 +35,8 @@ public class BattleRoyaleCommand {
                         .executes(this::stop))
                 .then(Commands.literal("join")
                         .executes(this::join))
+                .then(Commands.literal("opengui")
+                        .executes(this::openguilevel))
         );
     }
 
@@ -88,12 +90,12 @@ public static ServerLevel ismap = null;
 public static HashMap<String,ServerPlayer> playerserver = new HashMap<>();
     private int join(CommandContext<CommandSourceStack> context) {
         ServerPlayer player = context.getSource().getPlayer();
-        ModMessages.sendTo(new playerserverSyncS2CPacket(player,playerserver),player);
-        CompoundTag skillData = PlayerSkillHandler.getSkillData(player);
+       // ModMessages.sendTo(new playerserverSyncS2CPacket(player,playerserver),player);
+      //  CompoundTag skillData = PlayerSkillHandler.getSkillData(player);
       //  MCCourseMod.tag = skillData;
        // playerserver.put(player.getDisplayName().getString(), player);
-        player.sendSystemMessage(Component.literal(player.getDisplayName().getString()));
-        ModMessages.sendTo(new OpenTalentScreenS2CPacket(skillData,player), player);
+    //    player.sendSystemMessage(Component.literal(player.getDisplayName().getString()));
+       // ModMessages.sendTo(new OpenTalentScreenS2CPacket(skillData,player), player);
         playerserver.put(player.getDisplayName().getString(),player);
         // 例如在某个指令/事件/物品use中
 
@@ -121,7 +123,7 @@ public static HashMap<String,ServerPlayer> playerserver = new HashMap<>();
             //player.sendSystemMessage(Component.literal(dimension.location().getPath()));
             if (!BattleRoyaleManager.isActive()) {
                 if (!BattleRoyaleManager.finduuid(context.getSource().getPlayer().getUUID())) {
-                    BattleRoyaleManager.teleportOut(context.getSource().getPlayer());
+                    BattleRoyaleManager.teleportOut(context.getSource().getPlayer(),2);
                     // context.getSource().sendFailure(Component.literal("No active battle."));
                     //return 0;
                     BattleRoyaleManager.addPlayer(player);
@@ -140,7 +142,18 @@ public static HashMap<String,ServerPlayer> playerserver = new HashMap<>();
         return 1;
     }
 
+    private int openguilevel(CommandContext<CommandSourceStack> context) {
+        ServerPlayer player = context.getSource().getPlayer();
+        ModMessages.sendTo(new playerserverSyncS2CPacket(player,playerserver),player);
+        CompoundTag skillData = PlayerSkillHandler.getSkillData(player);
+        //  MCCourseMod.tag = skillData;
+        // playerserver.put(player.getDisplayName().getString(), player);
+        player.sendSystemMessage(Component.literal(player.getDisplayName().getString()));
+        ModMessages.sendTo(new OpenTalentScreenS2CPacket(skillData,player), player);
+       // playerserver.put(player.getDisplayName().getString(),player);
+        return 1;
 
+    }
     public static void updateSkillLevel(ServerPlayer player, int skillIndex, int newLevel) {
 //        PlayerSkillData skillData = PlayerSkillHandler.getSkillData(player);
 //        skillData.setSkillLevel(skillIndex, newLevel);

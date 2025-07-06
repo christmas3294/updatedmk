@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PlayerSkillData {
-    private static final String NBT_KEY = BattleRoyaleEvents.playeronline.getName().getString()+"nbt"; // 你用来存储技能数据的键
+   // private static final String NBT_KEY = BattleRoyaleEvents.playeronline.getName().getString()+"nbt"; // 你用来存储技能数据的键
 
     // 用Map存储每个技能的等级
     private final Map<Integer, Integer> skillLevels = new HashMap<>();

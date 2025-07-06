@@ -29,6 +29,9 @@ public class TalentEvents {
     @SubscribeEvent
     public static void onClone(PlayerEvent.Clone event) {
         PlayerTalentData.copyFrom(event.getOriginal(), event.getEntity());
+        if (event.getOriginal() instanceof ServerPlayer original && event.getEntity() instanceof ServerPlayer clone) {
+            PlayerSkillHandler.copyFrom(original, clone);
+        }
     }
 
 //    @SubscribeEvent
